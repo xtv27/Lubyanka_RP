@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Обзвон — Губернатор | ЛУБЯНКА RP</title>
+<style>
+:root{--bg:#0b1020;--panel:#151d32;--panel2:#1c2842;--line:#2c3a58;--text:#eef3ff;--muted:#a9b6cf;--green:#43d49a;--red:#ff6577;--gold:#e9bd62}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1b2c4d 0,#0b1020 55%);color:var(--text);font:16px/1.5 Arial,sans-serif;display:flex;justify-content:center;padding:24px}
+.wrap{width:min(760px,100%)}.top{text-align:center;margin:12px 0 22px}.tag{color:var(--gold);font-weight:700;letter-spacing:2px;font-size:12px}.top h1{font-size:clamp(25px,5vw,38px);margin:8px 0}.top p{color:var(--muted);margin:0}
+.card{background:linear-gradient(145deg,rgba(27,39,65,.98),rgba(17,25,43,.98));border:1px solid var(--line);border-radius:20px;padding:clamp(20px,4vw,34px);box-shadow:0 18px 55px #0006}
+.hidden{display:none!important}.field{width:100%;padding:15px 16px;border-radius:12px;border:1px solid #405274;background:#0c1426;color:white;font-size:17px;outline:none}.field:focus{border-color:var(--gold)}
+button{border:0;border-radius:12px;padding:14px 20px;font-weight:700;font-size:15px;cursor:pointer;transition:.15s}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:var(--gold);color:#182033}.secondary{background:#263653;color:var(--text);border:1px solid #405274}.success{background:var(--green);color:#09271c}.danger{background:#512532;color:#ffdce1;border:1px solid #8e3d50}
+button:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}.error{color:#ff8491;min-height:24px;margin-top:9px}.meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px;margin-bottom:14px}.bar{height:7px;background:#0b1324;border-radius:20px;overflow:hidden;margin-bottom:25px}.fill{height:100%;background:linear-gradient(90deg,#d4a84c,#f3d48d);width:0;transition:width .25s}
+.section{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px}.question{font-size:clamp(20px,3.8vw,26px);line-height:1.3;margin:0 0 22px}.answers{display:grid;gap:11px}.answer{display:flex;align-items:flex-start;gap:12px;text-align:left;background:#111b30;border:1px solid #344461;color:var(--text);font-weight:500;padding:15px;border-radius:12px;line-height:1.4}.answer .letter{flex:0 0 27px;height:27px;border-radius:8px;background:#2b3c5b;display:grid;place-items:center;font-weight:700;color:#f3d48d}.answer.selected{border-color:var(--gold);background:#29334a}.answer:disabled{opacity:1}
+textarea{width:100%;min-height:115px;resize:vertical;padding:14px;border-radius:12px;border:1px solid #405274;background:#0c1426;color:white;font:16px Arial;outline:none;margin-bottom:14px}
+.review{background:#101a2e;border:1px solid #344461;border-radius:12px;padding:16px;color:var(--muted);margin:16px 0}.actions{display:flex;justify-content:space-between;gap:12px;margin-top:22px}.actions button{flex:1}.score{font-size:54px;font-weight:800;color:var(--gold);line-height:1.1;margin:12px 0}.result-title{font-size:28px;font-weight:800}.ok{color:var(--green)}.bad{color:var(--red)}.small{font-size:13px;color:var(--muted)}.center{text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="tag">ЛУБЯНКА RP • КАДРОВАЯ КОМИССИЯ</div><h1>Обзвон на пост Губернатора</h1><p>Собеседование проводит куратор проекта</p></header>
+
+  <section class="card" id="gate">
+    <div class="section">Доступ к собеседованию</div>
+    <h2>Введите код доступа</h2>
+    <p class="small">После проверки кода начнётся обзвон. Код не отображается на экране.</p>
+    <input class="field" id="access" type="password" autocomplete="off" placeholder="Код доступа" aria-label="Код доступа">
+    <div class="error" id="gateError"></div>
+    <button class="primary" id="startBtn">СТАРТ</button>
+  </section>
+
+  <section class="card hidden" id="quiz">
+    <div class="meta"><span id="counter">Вопрос 1 из 36</span><span>Баллы: <b id="scoreNow">0</b></span></div>
+    <div class="bar"><div class="fill" id="progress"></div></div>
+    <div class="section" id="section">Общие вопросы</div>
+    <h2 class="question" id="question"></h2>
+    <div class="answers" id="answers"></div>
+    <div id="manualArea" class="hidden">
+      <textarea id="candidateText" placeholder="Запишите ответ кандидата (для открытого вопроса)"></textarea>
+      <div class="review">Оцените ответ кандидата самостоятельно. За зачтённый ответ начисляется 1 балл.</div>
+      <div class="actions">
+        <button class="success" id="manualYes">Зачесть · 1 балл</button>
+        <button class="danger" id="manualNo">Не зачесть · 0 баллов</button>
+      </div>
+    </div>
+    <div class="actions" id="navActions">
+      <button class="secondary" id="prevBtn">Назад</button>
+      <button class="primary" id="nextBtn" disabled>Далее</button>
+    </div>
+  </section>
+
+  <section class="card hidden center" id="result">
+    <div class="section">Результат собеседования</div>
+    <div class="score" id="finalScore">0 / 36</div>
+    <div class="result-title" id="verdict"></div>
+    <p id="resultText"></p>
+    <p class="small">Проходной балл: 26 из 36. Правильные ответы не раскрываются.</p>
+    <button class="secondary" onclick="location.reload()">Завершить</button>
+  </section>
+</div>
+<script>
+const ACCESS_HASH = "7700f066ea8e43e02293835c808ff77ba062d3cf5b5ed34108b2351c6397bbbc";
+const sections = [
+["I. Общие вопросы",[
+["Кто такой Губернатор?",["Глава региона, отвечающий за управление регионом и работу государственных структур","Руководитель одной государственной организации","Сотрудник, который занимается только выдачей наказаний"],0],
+["Какие основные обязанности Губернатора?",["Только проводить собеседования","Руководить регионом, координировать госструктуры и решать региональные вопросы","Заниматься исключительно личными делами"],1],
+["Что такое RolePlay (RP)?",["Общение вне игрового процесса","Отработка игровых преимуществ без ограничений","Отыгровка реальной жизни в игровом мире с соблюдением логики"],2],
+["Что означает IC?",["Информация и действия, относящиеся к игровому персонажу","Информация вне игрового процесса","Команда администрации"],0],
+["Что означает OOC?",["Действия персонажа в игре","Информация, не относящаяся к игровому процессу","Игровая государственная организация"],1]
+]],
+["II. Знание RP-терминологии",[
+["Что такое DM?",["Использование OOC-информации в игре","Нереалистичное поведение персонажа","Нанесение урона или убийство без веской IC-причины"],2],
+["Что такое MG?",["Использование OOC-информации в IC-процессе","Возвращение на место смерти","Преувеличение возможностей персонажа"],0],
+["Что такое PG?",["Нарушение правил чата","Преувеличение физических возможностей персонажа или отсутствие инстинкта самосохранения","Убийство без причины"],1],
+["Что такое NonRP?",["Игра по правилам проекта","Использование информации из реальной жизни","Нереалистичное поведение, невозможное в реальной жизни"],2],
+["Что такое RK?",["Возвращение на место своей смерти в течение 15 минут или месть за предыдущую смерть","Использование OOC-информации","Отказ от RP-ситуации"],0]
+]],
+["III. Государственные структуры",[
+["Какие государственные структуры существуют на проекте?",["МВД, ФСБ, Министерство обороны и Администрация региона","Только МВД и ФСБ","Только Администрация региона"],0],
+["Какую роль играет Губернатор в работе государственных организаций?",["Лично выполняет обязанности всех сотрудников","Контролирует деятельность, дисциплину и взаимодействие руководителей","Не имеет отношения к государственным организациям"],1],
+["Что делать при некомпетентности руководителя госорганизации?",["Сразу уволить без разбирательства","Игнорировать ситуацию","Провести проверку, выяснить причины и принять меры в рамках полномочий"],2],
+["Может ли Губернатор использовать сотрудников госорганизаций в личных целях?",["Нет, это недопустимо","Да, в любое время","Да, если сотрудник согласен"],0],
+["Как Губернатор должен взаимодействовать с руководителями госорганизаций?",["Общаться только при чрезвычайных ситуациях","Регулярно проводить собрания, ставить задачи и контролировать выполнение","Не вмешиваться в их работу"],1],
+["Должен ли Губернатор соблюдать правила сервера?",["Только во время проверок","Нет, должность даёт исключения","Да, независимо от должности"],2]
+]],
+["IV. Ситуационные вопросы",[
+["Руководители МВД и ФСБ вступили в конфликт. Ваши действия?",["Выслушать обе стороны и организовать переговоры","Поддержать того, кто обратился первым","Игнорировать конфликт"],0],
+["Руководитель систематически не проводит собеседования и мероприятия. Ваши действия?",["Сразу закрыть организацию","Провести беседу, выяснить причины, установить срок исправления и проверить результат","Не обращать внимания"],1],
+["Сотрудник госорганизации нарушает правила сервера. Ваши действия?",["Самостоятельно скрыть нарушение","Не реагировать, если сотрудник активный","Зафиксировать нарушение и передать информацию руководству или администрации"],2],
+["Руководитель просит уволить сотрудника без доказательств. Ваши действия?",["Запросить доказательства и объективно рассмотреть ситуацию","Сразу уволить по просьбе руководителя","Отказать, не разбираясь"],0],
+["В регионе происходит массовый беспорядок. Ваши действия?",["Самостоятельно задержать всех игроков","Организовать взаимодействие МВД и других структур и координировать RP-реагирование","Оставить ситуацию без внимания"],1],
+["Два руководителя обвиняют друг друга в нарушениях. Как поступите?",["Наказать обоих без проверки","Поверить более высокопоставленному","Запросить доказательства обеих сторон и принять решение по фактам"],2],
+["Игрок предлагает реальные деньги за государственную должность. Ваши действия?",["Отказаться, сохранить доказательства и сообщить администрации","Согласиться, если сумма большая","Предложить другую должность за деньги"],0],
+["Вы узнали, что руководитель использует полномочия в личных целях. Что будете делать?",["Не вмешиваться","Провести проверку, собрать доказательства и принять меры в рамках полномочий","Сразу публично обвинить его без проверки"],1]
+]],
+["V. Управленческие вопросы",[
+["Как вы планируете развивать государственные организации?",["Передать всю работу руководителям и не проверять их","Сосредоточиться только на одной организации","Улучшать взаимодействие, проводить мероприятия, контролировать активность и помогать руководителям"],2],
+["Как будете поддерживать активность госорганизаций?",["Проводить собрания, мероприятия, совместные RP-ситуации и контролировать задачи","Требовать активность, не предлагая никаких мероприятий","Не вмешиваться в активность"],0],
+["Как будете выбирать руководителей госорганизаций?",["Назначать знакомых","Оценивать опыт, активность, ответственность, лидерские качества и знание правил","Выбирать только по игровому уровню"],1],
+["Что делать, если в регионе недостаточно государственных сотрудников?",["Закрыть наборы","Игнорировать нехватку кадров","Организовать наборы и помочь руководителям улучшить кадровую работу"],2],
+["Как решать конфликты между игроками и госструктурами?",["Рассмотреть обе стороны, изучить доказательства и найти объективное решение","Всегда поддерживать госструктуру","Всегда поддерживать обычного игрока"],0],
+["Как контролировать работу руководителей организаций?",["Проверять только тех, на кого жалуются","Проводить проверки и собрания, анализировать отчёты и выполнение обязанностей","Не проверять, чтобы не мешать"],1]
+]],
+["VI. Личные вопросы кандидату",[
+["Почему вы хотите стать Губернатором?",null],
+["Есть ли у вас опыт руководства коллективом?",null],
+["Сколько времени в день вы готовы уделять проекту?",null],
+["Какие три изменения вы внесёте в работу региона после назначения?",null],
+["Почему администрация проекта должна доверить вам управление регионом?",null],
+["Готовы ли вы нести ответственность за работу руководителей государственных организаций?",["Да, Губернатор отвечает за контроль и своевременное решение проблем","Нет, за работу руководителей отвечает только администрация проекта"],0]
+]]
+];
+let questions=[];
+sections.forEach(([name,items])=>items.forEach(item=>questions.push({section:name,text:item[0],options:item[1],correct:item[2]})));
+let current=0, answers=Array(questions.length).fill(null), score=0;
+const $=id=>document.getElementById(id);
+async function sha256(s){const data=new TextEncoder().encode(s);const digest=await crypto.subtle.digest("SHA-256",data);return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");}
+$("startBtn").addEventListener("click",async()=>{
+  const input=$("access").value;
+  const hash=await sha256(input);
+  if(hash!==ACCESS_HASH){$("gateError").textContent="Неверный код доступа."; $("access").value=""; return;}
+  $("gate").classList.add("hidden");$("quiz").classList.remove("hidden");render();
+});
+$("access").addEventListener("keydown",e=>{if(e.key==="Enter")$("startBtn").click();});
+function render(){
+ const q=questions[current];$("counter").textContent=`Вопрос ${current+1} из ${questions.length}`;
+ $("scoreNow").textContent=answers.reduce((s,a)=>s+(a?.point||0),0);
+ $("progress").style.width=((current)/questions.length*100)+"%";
+ $("section").textContent=q.section;$("question").textContent=q.text;
+ $("answers").innerHTML="";$("manualArea").classList.add("hidden");$("navActions").classList.remove("hidden");
+ if(q.options){
+   q.options.forEach((opt,i)=>{const b=document.createElement("button");b.className="answer"+(answers[current]?.choice===i?" selected":"");b.innerHTML=`<span class="letter">${String.fromCharCode(65+i)}</span><span></span>`;b.querySelector("span:last-child").textContent=opt;b.addEventListener("click",()=>{answers[current]={choice:i,point:i===q.correct?1:0};render();});$("answers").appendChild(b);});
+   $("nextBtn").disabled=answers[current]===null;
+ }else{
+   $("manualArea").classList.remove("hidden");$("navActions").classList.add("hidden");
+   $("candidateText").value=answers[current]?.text||"";
+ }
+ $("prevBtn").disabled=current===0;
+ $("nextBtn").textContent=current===questions.length-1?"Завершить":"Далее";
+}
+$("prevBtn").onclick=()=>{if(current>0){current--;render();}};
+$("nextBtn").onclick=()=>{if(current<questions.length-1){current++;render();}else finish();};
+function gradeManual(point){answers[current]={text:$("candidateText").value,point};if(current<questions.length-1){current++;render();}else finish();}
+$("manualYes").onclick=()=>gradeManual(1);$("manualNo").onclick=()=>gradeManual(0);
+function finish(){
+ score=answers.reduce((s,a)=>s+(a?.point||0),0);
+ $("quiz").classList.add("hidden");$("result").classList.remove("hidden");
+ $("finalScore").textContent=`${score} / ${questions.length}`;
+ const passed=score>=26;
+ $("verdict").textContent=passed?"ПОДХОДИТ!":"НЕ ПОДХОДИТ!";
+ $("verdict").className="result-title "+(passed?"ok":"bad");
+ $("resultText").textContent=passed?"Кандидат набрал проходной балл и прошёл обзвон.":"Кандидат набрал меньше 26 баллов и не прошёл обзвон.";
+}
+</script>
+</body></html>
